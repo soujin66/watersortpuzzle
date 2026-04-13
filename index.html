@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Water Sort</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="startScreen">
+  <h1 class="logo">💧 WATER SORT</h1>
+
+  <div class="description">
+    <p>같은 색의 물만 하나의 병에 모으세요</p>
+    <p>위에 있는 물만 이동할 수 있습니다</p>
+    <p>모든 색을 정리하면 클리어!</p>
+  </div>
+
+  <button id="startBtn">START</button>
+</div>
+
+<div id="gameContainer" class="hidden">
+  <div class="top-bar">
+    <button id="homeBtn">HOME</button>
+    <h2 id="stageText"></h2>
+  </div>
+
+  <div id="board">
+    <div id="topRow" class="row"></div>
+    <div id="bottomRow" class="row offset"></div>
+  </div>
+
+  <svg id="liquidSvg"></svg>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
