@@ -4,9 +4,28 @@ let selected = null;
 let stage = 1;
 let animating = false;
 
+const startBtn = document.getElementById("startBtn");
+const homeBtn = document.getElementById("homeBtn");
+const startScreen = document.getElementById("startScreen");
+const gameContainer = document.getElementById("gameContainer");
+const stageText = document.getElementById("stageText");
+const clearText = document.getElementById("clearText");
+const overlay = document.getElementById("overlay");
+
 const colors = [
   "#ef4444","#3b82f6","#22c55e","#eab308",
-  "#a855f7","#ec4899","#14b8a6"
+  "#a855f7","#ec4899","#14b8a6","#f97316"
+];
+
+// 난이도 테이블
+const levelConfig = [
+  { bottles: 5, colors: 3 },
+  { bottles: 6, colors: 4 },
+  { bottles: 7, colors: 5 },
+  { bottles: 8, colors: 6 },
+  { bottles: 9, colors: 7 },
+  { bottles: 10, colors: 7 },
+  { bottles: 11, colors: 8 },
 ];
 
 // 시작
@@ -25,16 +44,25 @@ homeBtn.onclick = () => {
   stage = 1;
 };
 
-// ⭐⭐⭐ 랜덤 유지 + 안정성 보장
+// 스테이지 생성
 function generate(level){
+  let config;
+
+  if(level <= levelConfig.length){
+    config = levelConfig[level - 1];
+  } else {
+    config = {
+      bottles: 11 + Math.floor((level - levelConfig.length)/2),
+      colors: 8
+    };
+  }
+
+  let bottleCount = config.bottles;
+  let colorCount = config.colors;
 
   let valid = false;
 
   while(!valid){
-    // 난이도 완만
-    let bottleCount = 5 + Math.floor(level/2);
-    let colorCount = Math.min(3 + Math.floor(level/2), bottleCount - 2);
-
     let pool = [];
 
     for(let i=0;i<colorCount;i++){
@@ -46,15 +74,15 @@ function generate(level){
     shuffle(pool);
 
     bottles = [];
+
     for(let i=0;i<colorCount;i++){
       bottles.push(pool.splice(0, MAX));
     }
 
-    // 빈 병 2개
-    bottles.push([]);
-    bottles.push([]);
+    while(bottles.length < bottleCount){
+      bottles.push([]);
+    }
 
-    // ⭐ 검사
     valid = isSolvableState();
   }
 }
@@ -67,11 +95,8 @@ function shuffle(arr){
   }
 }
 
-// ⭐ 최소한의 “막힘 방지 검사”
+// 최소 이동 가능 체크
 function isSolvableState(){
-
-  let moveExists = false;
-
   for(let i=0;i<bottles.length;i++){
     for(let j=0;j<bottles.length;j++){
       if(i===j) continue;
@@ -85,13 +110,12 @@ function isSolvableState(){
 
       if(dst.length===0 || dst[dst.length-1]===color){
         if(dst.length < MAX){
-          moveExists = true;
+          return true;
         }
       }
     }
   }
-
-  return moveExists;
+  return false;
 }
 
 // 렌더
@@ -113,7 +137,7 @@ function render(){
   });
 }
 
-// 병
+// 병 생성
 function createBottle(b,i){
   const div=document.createElement("div");
   div.className="bottle";
@@ -147,7 +171,7 @@ function clickBottle(i){
   render();
 }
 
-// 곡선 물
+// ⭐ 진짜 물 애니메이션
 function drawLiquid(fromEl,toEl,color){
   const svg=document.getElementById("liquidSvg");
   svg.innerHTML="";
@@ -159,20 +183,22 @@ function drawLiquid(fromEl,toEl,color){
 
   const d=`
     M ${f.left+30} ${f.top+20}
-    C ${f.left+30} ${f.top-100},
-      ${t.left+30} ${t.top-100},
+    C ${f.left+30} ${f.top-120},
+      ${t.left+30} ${t.top-120},
       ${t.left+30} ${t.top+20}
   `;
 
   path.setAttribute("d",d);
   path.setAttribute("stroke",color);
-  path.setAttribute("stroke-width","8");
+  path.setAttribute("stroke-width","35");
   path.setAttribute("fill","none");
   path.setAttribute("stroke-linecap","round");
+  path.setAttribute("stroke-linejoin","round");
+  path.setAttribute("opacity","0.85");
 
-  path.style.strokeDasharray="300";
-  path.style.strokeDashoffset="300";
-  path.style.transition="0.5s";
+  path.style.strokeDasharray="400";
+  path.style.strokeDashoffset="400";
+  path.style.transition="0.4s linear";
 
   svg.appendChild(path);
 
@@ -180,7 +206,17 @@ function drawLiquid(fromEl,toEl,color){
     path.style.strokeDashoffset="0";
   });
 
-  setTimeout(()=>svg.innerHTML="",500);
+  // 물 흔들림 효과
+  let offset = 0;
+  const wave = setInterval(()=>{
+    offset += 2;
+    path.style.transform = `translateX(${Math.sin(offset/5)*2}px)`;
+  },30);
+
+  setTimeout(()=>{
+    clearInterval(wave);
+    svg.innerHTML="";
+  },500);
 }
 
 // 이동
@@ -225,19 +261,40 @@ function pour(from,to){
   },500);
 }
 
-// 클리어
+// 완료 체크
 function isComplete(b){
   return b.length===MAX && b.every(v=>v===b[0]);
 }
 
+// 클리어 처리
 function checkClear(){
   let win=bottles.every(b=>b.length===0||isComplete(b));
 
   if(win){
+    animating = true;
+
+    overlay.classList.remove("hidden");
+    clearText.classList.remove("hidden");
+
     setTimeout(()=>{
-      stage++;
-      generate(stage);
-      render();
-    },600);
+      overlay.classList.add("show");
+      clearText.classList.add("show");
+    },10);
+
+    setTimeout(()=>{
+      overlay.classList.remove("show");
+      clearText.classList.remove("show");
+
+      setTimeout(()=>{
+        overlay.classList.add("hidden");
+        clearText.classList.add("hidden");
+
+        stage++;
+        generate(stage);
+        render();
+
+        animating = false;
+      },300);
+    },2000);
   }
 }

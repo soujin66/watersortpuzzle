@@ -8,7 +8,7 @@
 </head>
 <body>
 
-<div id="startScreen">
+<div id="startScreen" class="screen">
   <h1 class="logo">💧 WATER SORT</h1>
 
   <div class="description">
@@ -20,7 +20,7 @@
   <button id="startBtn">START</button>
 </div>
 
-<div id="gameContainer" class="hidden">
+<div id="gameContainer" class="screen hidden">
   <div class="top-bar">
     <button id="homeBtn">HOME</button>
     <h2 id="stageText"></h2>
@@ -30,6 +30,9 @@
     <div id="topRow" class="row"></div>
     <div id="bottomRow" class="row offset"></div>
   </div>
+
+  <div id="overlay" class="hidden"></div>
+  <div id="clearText" class="hidden">CLEAR!</div>
 
   <svg id="liquidSvg"></svg>
 </div>
